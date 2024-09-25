@@ -10,11 +10,8 @@ class Customer extends Model
     use HasFactory;
 
     protected $table = "customers";
-
     protected $primaryKey = "customer_id";
-
     public $incrementing = false;
-
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -35,11 +32,17 @@ class Customer extends Model
 
     public function goldMember()
     {
-        $goldMemberPointsThreshold = 2000;
-        return $this->points >= $goldMemberPointsThreshold;
+        return $this->points >= 2000;
     }
+
     public function getIsGoldMemberAttribute()
     {
         return $this->goldMember();
+    }
+
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customer_id', 'customer_id');
     }
 }

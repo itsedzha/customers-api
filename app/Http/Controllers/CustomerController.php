@@ -2,49 +2,146 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+
 
 class CustomerController extends Controller
 {
     /**
      * Display a listing of customers.
      */
-    public function index()
-    {
-        return Customer::all(); 
-    }
+
+     public function index()
+{
+    // Get the SQL query as a string for debugging
+    $sqlQuery = DB::table('customers as c')
+        ->join('orders as o', 'c.customer_id', '=', 'o.customer_id')
+        ->join('order_statuses as os', 'o.status', '=', 'os.order_status_id')
+        ->select(
+            'c.customer_id',
+            'c.first_name',
+            'c.last_name',
+            'c.address',
+            'c.city',
+            'c.state',
+            'c.points',
+            'o.order_date',
+            'os.name as order_status_name'
+        )
+        ->toSql(); // This will return the SQL query as a string
+
+    // Return the SQL query string as the response (for debugging)
+    return response()->json(['sql' => $sqlQuery]);
+}
+
+
+    // public function index()
+    // {
+    //     $customersWithOrders = DB::table('customers as c')
+    //         ->join('orders as o', 'c.customer_id', '=', 'o.customer_id')
+    //         ->join('order_statuses as os', 'o.status', '=', 'os.order_status_id')
+    //         ->select(
+    //             'c.customer_id',
+    //             'c.first_name',
+    //             'c.last_name',
+    //             'c.address',
+    //             'c.city',
+    //             'c.state',
+    //             'c.points',
+    //             'o.order_date',
+    //             'os.name as order_status_name'
+    //         )
+    //         ->get();
+
+    //     return response()->json($customersWithOrders);
+    // }
 
     /**
      * Display a specific customer.
      */
-    public function show(Customer $customer)
-    {
-        return $customer; 
-    }
+    public function show($id)
+{
+    // Fetch the SQL query for customer with orders and order statuses using their customer_id
+    $sqlQuery = DB::table('customers as c')
+        ->join('orders as o', 'c.customer_id', '=', 'o.customer_id')
+        ->join('order_statuses as os', 'o.status', '=', 'os.order_status_id')
+        ->select(
+            'c.customer_id',
+            'c.first_name',
+            'c.last_name',
+            'c.address',
+            'c.city',
+            'c.state',
+            'c.points',
+            'o.order_date',
+            'os.name as order_status_name'
+        )
+        ->where('c.customer_id', '=', $id)
+        ->toSql(); // This returns the SQL query as a string
+
+    // Return the SQL query string as the response (for debugging)
+    return response()->json(['sql' => $sqlQuery]);
+}
+
+
+    // public function show($id)
+    // {
+    //     // Fetch customer with orders and order statuses using their customer_id
+    //     $customerWithOrders = DB::table('customers as c')
+    //         ->join('orders as o', 'c.customer_id', '=', 'o.customer_id')
+    //         ->join('order_statuses as os', 'o.status', '=', 'os.order_status_id')
+    //         ->select(
+    //             'c.customer_id',
+    //             'c.first_name',
+    //             'c.last_name',
+    //             'c.address',
+    //             'c.city',
+    //             'c.state',
+    //             'c.points',
+    //             'o.order_date',
+    //             'os.name as order_status_name'
+    //         )
+    //         ->where('c.customer_id', '=', $id)
+    //         ->get();
+    
+    //     if ($customerWithOrders->isEmpty()) {
+    //         return response()->json(['message' => 'Customer not found'], 404);
+    //     }
+    
+    //     return response()->json($customerWithOrders);
+    // }
+    
 
     /**
      * Store a newly created customer.
      */
-    public function store(Request $request)
+    public function store(Request $request, $customer_id)
     {
-        // Validation rules based on your table schema
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            // 'birth_date' => 'nullable|date',
-            // 'phone' => 'required|string|max:50',
-            'address' => 'nullable|string|max:50',
-            'city' => 'required|string|max:50',
-            'state' => 'required|string|size:2',
-            'points' => 'required|integer|min:0',
+        // Check if the customer exists
+        $customer = Customer::find($customer_id);
+        if (!$customer) {
+            return response()->json(['message' => 'Customer not found'], 404);
+        }
+    
+        // Validation rules for order creation
+        $validatedData = $request->validate([
+            'order_date' => 'required|date',
+            'status' => 'required|string',
+            'comments' => 'nullable|string',
+            'shipped_date' => 'nullable|date',
+            'shipper_id' => 'nullable|integer',
         ]);
     
-        // Create the customer if validation passes
-        $customer = Customer::create($validated);
+        // Create a new order for the specific customer
+        $order = new Order($validatedData);
+        $order->customer_id = $customer_id;
+        $order->save();
     
-        return response()->json($customer, 201);
+        return response()->json($order, 201); // Return the newly created order
     }
+    
 
     /**
      * Update the specified customer.
