@@ -20,6 +20,8 @@ class Order extends Model
         'shipper_id'
     ];
 
+    public $timestamps = false;
+    
     // Define the inverse one-to-many relationship with customer
     public function customer()
     {

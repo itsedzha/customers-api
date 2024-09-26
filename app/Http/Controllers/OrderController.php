@@ -64,7 +64,7 @@ class OrderController extends Controller
 
         $validatedData = $request->validate([
             'order_date' => 'required|date',
-            'status' => 'required|string',
+            'status' => 'required|integer',
             'comments' => 'nullable|string',
             'shipped_date' => 'nullable|date',
             'shipper_id' => 'nullable|integer',
