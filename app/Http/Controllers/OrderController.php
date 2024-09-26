@@ -41,13 +41,14 @@ class OrderController extends Controller
         }
     
         // Retrieve the specific order for the customer
-        $order = $customer->orders()->find($order_id);
+        $order = $customer->orders()->where('order_id', $order_id)->first();
         if (!$order) {
             return response()->json(['message' => 'Order not found for this customer'], 404);
         }
     
         return response()->json($order);
     }
+    
     
 
     /**
